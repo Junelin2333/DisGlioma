@@ -1,0 +1,27 @@
+TRAIN:
+  train_batch_size: 32
+  valid_batch_size: 16
+
+  lr: 0.0002
+  weight_decay: 0.00001
+  min_lr: 0.00005
+
+  min_epochs: 1
+  max_epochs: 3
+  patience: 1
+
+  device: 1
+
+MODEL:
+  model_save_path: 'save_model'
+  model_name: 'map_vision'
+  cross_attn: False
+  cluster: 3
+  center_dim: 256
+
+DATA:
+  fold: 1
+  root_dir: 'data'
+  ds_name: 'combined_data'
+  csv_path: "data/clinical/combined_data.csv"
+

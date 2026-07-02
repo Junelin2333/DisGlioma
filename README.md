@@ -1,78 +1,109 @@
 # DisGlioma: Radiogenomics-based Distilled Prompt Learning for Non-invasive Survival Prediction in Adult Diffuse Glioma
-DisGlioma, a radiogenomics multimodal framework that integrates distilled genetic embeddings with MRI features for non-invasive survival prediction in adult diffuse gliomas.
-DisGlioma leverages biological-informed neural network and large language model with prompt learning to distill subtype-specific genetic representations, which are then fused with MRI features through cross-attention.
-
-## Data preparation
-Please 
-### Gene Expression Data
-The pathways signature has been provided in the datasets folder. 
 
 ## Table of Contents
 - [Introduction](#introduction)
 - [Data preparation](#data-preparation)
 - [Requirements](#requirements)
-- [Run](#run)
+- [Training](#train)
 - [License & Citation](#license--citation)
 
 ## Introduction
 
-![DisPro](./imgs/figure1_dispro.png)
+<!-- ![DisPro](./imgs/Figure1.png) -->
 
-The integration of multimodal data including pathology images and gene profiles is widely applied in precise survival prediction. Despite recent advances in multimodal survival models, collecting complete modalities for multimodal fusion still poses a significant challenge, hindering their application in clinical settings. Current approaches tackling incomplete modalities often fall short, as they typically compensate for only a limited part of the knowledge of missing modalities. To address this issue, we propose a Distilled Prompt Learning framework (DisPro) to utilize the strong robustness of Large Language Models (LLMs) to missing modalities, which employs two-stage prompting for compensation of comprehensive information for missing modalities. In the first stage, Unimodal Prompting (UniPro) distills the knowledge distribution of each modality, preparing for supplementing modality-specific knowledge of the missing modality in the subsequent stage. In the second stage, Multimodal Prompting (MultiPro) leverages available modalities as prompts for LLMs to infer the missing modality, which provides modality-common information. Simultaneously, the unimodal knowledge acquired in the first stage is injected into multimodal inference to compensate for the modality-specific knowledge of the missing modality. Extensive experiments covering various missing scenarios demonstrated the superiority of the proposed method.
-
+We introduce DisGlioma, a radiogenomics multimodal framework that integrates distilled genetic embeddings with MRI features for non-invasive survival prediction in adult diffuse gliomas. 
+DisGlioma leverages biological-informed neural network and large language model with prompt learning to distill subtype-specific genetic representations, which are then fused with MRI features through cross-attention. During inference, DisGlioma requires only preoperative MRI and clinical information, enabling more accurate and clinically applicable non-invasive survival prediction. 
 
 ## Data preparation
-### WSIs
-1. Preprocessing WSI data by [PrePATH](https://github.com/birkhoffkiki/PrePATH) and extract `uni` features (or other foundation features you want) for each slide. PrePATH provides an easy-to-use tool for WSI preprocessing.
-2. Set up the dir of feature as `data_root_wsi`.
+### MR Images
+The patients confirmed to have a complete series of the requisite MRI sequences(T1W,T2W,T1CE,FLAIR), was processed further using the Cancer Imaging Phenomics Toolkit(CaPTk), version 1.9.0, with following steps: \
+(1) re-orientation to a reference coordinate system (here, left-posterior-superior (LPS)); \
+(2) co-registration and resampling to an isotropic resolution of $1mm^3$ based on a common anatomical SRI24 atlas, with spatial dimensions of $240 \times 240 \times 155$ ( $height \times weight \times depth$ ) voxels; \
+(3) removes non-brain structures (skull-stripping) using HD-BET; \
+(4) all datasets were performed N4 bias corrected to remove RF inhomogeneities, and intensity normalized to zero-mean and unit variance.
 
-### Gene
-1. The pathways signature is provided in the `datasets` folder.
-2. The RNA-Seq expression data are provided on [GoogleDrive](https://drive.google.com/drive/folders/18cxpThdOMgX_BWvsn5i-DTYdTkECcHsx?usp=sharing). You can unzip them and put it somewhere you like, which should be set as `data_root_omics`.
+The merged multi-sequence MRI data for each patient are stored as .`nii.gz` files in `./0-data/image/`.
 
-### CSV
-- The data file for complete modaltiy is provided in `splits/[STUDY]_Splits.csv`.
+### Gene Expression Data
+Multiple gene expression datasets are used in this study. These data consist of mRNA sequencing and microarray profiles derived from multiple platforms. The bulk RNA-seq data is normalized to $\log_2(\text{FPKM} + 1)$, while the microarray data remains unaltered. After that, these datasets are merged together and applied the ComBat algorithm to reduce cross-platform differences and batch effects.
 
-- The data file for various missing scenarios are provided in `splits/csv_missing_cleaned` folder, where the number following 'W' or 'O' represents the missing rate for WSI or Omics, respectively. (Or you can simulate the missing scenarios by yourself.)
+The merged gene expression data are stored in `./0-data/bulk/`, as `h5ad` format with a data matrix of `n_obs × n_vars`, where `obs` includes `sample_id` and `batch` (i.e. dataset labels), and `var` includes `gene symbols`.
 
+### Clinical & Survival Information
+Clinical and survival information are stored in CSV format, with the header shown below.
+```
+sample_id | os | censor | sex | dataset_tag
+```
+where `os` denotes overall survival time in months, and `censor` indicates the survival event: `censor = 1` means deceased, and `censor = 0` means alive.
+
+**Before start training, please make sure all processed data are stored according to the file tree below**. 
+
+```
+0-data/
+├── bulk/          # Gene expression data
+│    ├── gene_expr_public.h5ad
+│    ├── gene_expr_in_house.h5ad
+├── clincial/      # Clinical & Survival information     
+│    ├── clinical_gene.csv
+│    ├── clinical_gene_external.csv
+│    ├── clinical_image.csv
+│    ├── clinical_image_external.csv            
+├── image/         # MRI dataset
+│    ├── dataset1/          
+│    │   ├── patient1/
+│    │   │   ├── patient1.nii.gz
+│    ├── dataset2/
+│    │   ...
+│    └── datasetn/      
+└── pathway_info.csv     # Pathway annotation
+```
 
 ## Requirements
+Key Requirements list here:
+```
+einops==0.8.2
+itk==5.4.5
+lifelines==0.30.3
+monai==1.5.2
+lightning==2.6.1
+pandas==2.3.3
+pytorch-lightning==2.6.1
+scanpy==1.12.1
+scikit-survival==0.27.0
+torch == 2.8.0
+torchsurv==0.1.6
+torch-geometric==2.7.0
+transformers==5.5.4
+```
 
-1. Create a new conda environmenty.
-```
-conda create -n dispro python=3.10
-conda activate dispro
-```
-2. Install the required packages.
-```
-torch == 2.3.0+cu121
-timm == 0.9.8
-torchvision == 0.18.0
-numpy == 1.24.3
-```
-or directly install environment by `yaml` file.
-```
-conda create -n dispro -f dispro.yaml
-```
- 
+This study relies on Python 3.13 and CUDA 12.8. 
+See `requirements.txt` for the full list.
 
+## Training
+DisGlioma comprises a gene branch and an image branch. The Gene branch and imaging branch of DisGlioma are trained separately. 
+### Stage 1: Training Gene Branch
 
-## Run
-There are two stages in DisPro.
-### Stage 1 - UniPro
-You need to train a UniPro for each modality. 
-#### WSI
+#### Training BINN
+First, the BINN in the Gene branch was trained using the NLL loss as the optimization objective to obtain pathway-level embeddings and a global embedding, and hierarchical clustering was then used to annotate each sample in the dataset with a subtype label. 
+
 To train the UniPro for pathology, you can specify the arguments in the `run_unipro_wsi.sh` script stored in [scripts](./scripts/) and run it.
 ```bash
 bash scripts/run_unipro_wsi.sh
 ```
-#### Omics
+#### Genetic Embeddings Distillation
+Next, the BINN was frozen, and prompt learning with a pretrained BioClinicalBERT was used to perform subtype-specific genetic embeddings distillation. During this process, only the prompt embeddings were optimized, while both the BINN and the pretrained BioClinicalBERT remained frozen. 
+
 To train the UniPro for pathology, you can specify the arguments in the `run_unipro_wsi.sh` script stored in [scripts](./scripts/) and run it.
 ```bash
 bash scripts/run_unipro_omics.sh
 ```
 
-### Stage 2 - MultiPro
+### Stage 2: Training Image Branch
+After completing the training of the gene branch, the image branch of DisGlioma was trained. First, the visual encoder extracted visual features and mapped them to subtypes. During this mapping process, $\mathcal{L}_{surv}$, $\mathcal{L}_{cls}$, and $\mathcal{L}_{center} $ were used as optimization objectives to train the visual encoder.
+
+Next, the visual encoder was frozen, and the visual features and subtype-specific genetic features were fused through a cross-attention module. \(\mathcal{L}_{surv}\) was used to supervise the model and improve survival prediction performance. 
+
+Finally, both the visual encoder and the cross-attention module were frozen, and the enhanced visual features together with the encoded clinical information were fed into the risk decoder to enable non-invasive prediction based on preoperative multimodal information. In this final step, only the risk decoder was trained. 
 1. You need to specify the save path `result_root` to checkpoints in `utils/get_path_ckpt_dict.py`.
 
 2. You need to get the json file storing paths of ckpt of UniPro for every modality by run:
@@ -87,6 +118,5 @@ bash scripts/run_multipro.sh
 ```
 
 
-
 ## License & Citation
-This project is licensed under the Apache-2.0 License.
+This project is licensed under the GPL-3.0 License.
