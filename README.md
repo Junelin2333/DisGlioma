@@ -9,7 +9,7 @@
 
 ## Introduction
 
-<!-- ![DisPro](./imgs/Figure1.png) -->
+![DisPro](./imgs/Figure1.png)
 
 We introduce DisGlioma, a radiogenomics multimodal framework that integrates distilled genetic embeddings with MRI features for non-invasive survival prediction in adult diffuse gliomas. 
 DisGlioma leverages biological-informed neural network and large language model with prompt learning to distill subtype-specific genetic representations, which are then fused with MRI features through cross-attention. During inference, DisGlioma requires only preoperative MRI and clinical information, enabling more accurate and clinically applicable non-invasive survival prediction. 
