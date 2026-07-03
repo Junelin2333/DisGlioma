@@ -40,7 +40,7 @@ class VisionModel(nn.Module):
 
         #### config gene prompt ###
         self.gene_prompt = nn.Parameter(torch.empty((config.num_cluster, config.num_prompts, config.embed_dim)), requires_grad=False)
-        prompt_weights = torch.load(Path(__file__).resolve().parent.parent / 'ckpt' / 'prompt_st3.pt', map_location='cpu')
+        prompt_weights = torch.load(Path(__file__).resolve().parent / 'prompt_st3.pt', map_location='cpu')
         self.gene_prompt.data.copy_(prompt_weights)
 
         self.proj = nn.Sequential(

@@ -27,7 +27,7 @@ class DisGlioConfig:
     language_feature_init: str = "auto"
 
     vision_embed_dim: int = 768
-    vision_pretrain: int = Path(__file__).resolve().parent.parent / 'ckpt' / "prompt_surv_fold5.pt"
+    vision_pretrain: int = Path(__file__).resolve().parents[2] / 'save_model' / "attn_vision.pt"
     freeze_vision_encoder: bool = True
     
     out_bins: int = 4
