@@ -111,6 +111,5 @@ Finally, both the visual encoder and the cross-attention module were frozen, and
 bash training_scripts/3-train_disglioma.sh
 ```
 
-
 ## License & Citation
 This project is licensed under the GPL-3.0 License.
