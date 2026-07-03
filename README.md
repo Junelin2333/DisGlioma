@@ -97,7 +97,7 @@ bash training_scripts/2-genetic_distillation.sh
 ```
 
 ### Stage 2: Training Image Branch
-After completing the training of the gene branch, the image branch of DisGlioma was trained. First, the visual encoder extracted visual features and mapped them to subtypes. During this mapping process, $\mathcal{L}_{surv}$, $\mathcal{L}_{cls}$, and $\mathcal{L}_{center}$ were used as optimization objectives to train the visual encoder.
+After completing the training of the gene branch, the image branch of DisGlioma was trained. First, the visual encoder extracted visual features and mapped them to subtypes. During this mapping process, $\mathcal{L}_{surv}$ , $\mathcal{L}_{cls}$ , and $\mathcal{L}_{center}$ were used as optimization objectives to train the visual encoder.
 
 Next, the visual encoder was frozen, and the visual features and subtype-specific genetic features were fused through a cross-attention module. $\mathcal{L}_{surv}$ was used to supervise the model and improve survival prediction performance. 
 
