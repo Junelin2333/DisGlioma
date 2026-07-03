@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import os
 from einops import rearrange, repeat
 from typing import Optional
 from torch.nn import functional as F
@@ -20,6 +21,7 @@ class VisionConfig:
     embed_dim: int = 768
     llm_model: str = "emilyalsentzer/Bio_ClinicalBERT"
     cross_attn: bool = True
+    vision_pretrain: bool = True
     confidence_threshold: float = 0.85
 
 
@@ -53,6 +55,8 @@ class VisionModel(nn.Module):
         
         ### config multimodal cross attention ###
         if config.cross_attn:
+            if config.vision_pretrain:
+                self._load_vision()
             self.attn1 = nn.MultiheadAttention(config.embed_dim, num_heads=2, batch_first=True)
             self.up = nn.Sequential(
                 nn.Linear(128, config.embed_dim),
@@ -135,3 +139,24 @@ class VisionModel(nn.Module):
         return sim
 
 
+    def _load_vision(self):
+        ckpt_path = (Path(__file__).resolve().parents[2] / 'save_model' / 'map_vision.pt')
+        if not ckpt_path:
+            return
+        if not os.path.exists(ckpt_path):
+            raise FileNotFoundError(f"vision_pretrain not found: {ckpt_path}")
+
+        checkpoint = torch.load(ckpt_path, map_location="cpu")
+        state_dict = checkpoint.get("state_dict", checkpoint)
+
+        new_ckpt = OrderedDict()
+        for k, v in state_dict.items():
+            new_key = k.replace("model.vision_encoder.", "")
+            new_ckpt[new_key] = v
+
+        msg = self.vision_encoder.load_state_dict(new_ckpt, strict=True)
+        print(
+            "Loaded vision encoder weights:",
+            f"missing={msg.missing_keys}",
+            f"unexpected={msg.unexpected_keys}",
+        )

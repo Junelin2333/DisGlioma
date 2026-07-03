@@ -6,16 +6,16 @@ TRAIN:
   weight_decay: 0.00001
   min_lr: 0.00005
 
-  min_epochs: 10
-  max_epochs: 144
-  patience: 10
+  min_epochs: 1
+  max_epochs: 36
+  patience: 8
 
   device: 1
 
 MODEL:
   model_save_path: 'save_model'
-  model_name: 'attn_vision'
-  cross_attn: True
+  model_name: 'map_vision'
+  cross_attn: False
   cluster: 3
   center_dim: 256
 

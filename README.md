@@ -82,39 +82,33 @@ See `requirements.txt` for the full list.
 ## Training
 DisGlioma comprises a gene branch and an image branch. The Gene branch and imaging branch of DisGlioma are trained separately. 
 ### Stage 1: Training Gene Branch
-
+Before training, the scGPT weights should be downloaded from
 #### Training BINN
 First, the BINN in the Gene branch was trained using the NLL loss as the optimization objective to obtain pathway-level embeddings and a global embedding, and hierarchical clustering was then used to annotate each sample in the dataset with a subtype label. 
 
-To train the UniPro for pathology, you can specify the arguments in the `run_unipro_wsi.sh` script stored in [scripts](./scripts/) and run it.
 ```bash
-bash scripts/run_unipro_wsi.sh
+bash training_scripts/1-train_binn.sh
 ```
 #### Genetic Embeddings Distillation
 Next, the BINN was frozen, and prompt learning with a pretrained BioClinicalBERT was used to perform subtype-specific genetic embeddings distillation. During this process, only the prompt embeddings were optimized, while both the BINN and the pretrained BioClinicalBERT remained frozen. 
 
-To train the UniPro for pathology, you can specify the arguments in the `run_unipro_wsi.sh` script stored in [scripts](./scripts/) and run it.
 ```bash
-bash scripts/run_unipro_omics.sh
+bash training_scripts/2-genetic_distillation.sh
 ```
 
 ### Stage 2: Training Image Branch
-After completing the training of the gene branch, the image branch of DisGlioma was trained. First, the visual encoder extracted visual features and mapped them to subtypes. During this mapping process, $\mathcal{L}_{surv}$, $\mathcal{L}_{cls}$, and $\mathcal{L}_{center} $ were used as optimization objectives to train the visual encoder.
+After completing the training of the gene branch, the image branch of DisGlioma was trained. First, the visual encoder extracted visual features and mapped them to subtypes. During this mapping process, $\mathcal{L}_{surv}$, $\mathcal{L}_{cls}$, and $\mathcal{L}_{center}$ were used as optimization objectives to train the visual encoder.
 
-Next, the visual encoder was frozen, and the visual features and subtype-specific genetic features were fused through a cross-attention module. \(\mathcal{L}_{surv}\) was used to supervise the model and improve survival prediction performance. 
+Next, the visual encoder was frozen, and the visual features and subtype-specific genetic features were fused through a cross-attention module. $\mathcal{L}_{surv}$ was used to supervise the model and improve survival prediction performance. 
+
+```bash
+bash training_scripts/3-map_vision.sh
+```
 
 Finally, both the visual encoder and the cross-attention module were frozen, and the enhanced visual features together with the encoded clinical information were fed into the risk decoder to enable non-invasive prediction based on preoperative multimodal information. In this final step, only the risk decoder was trained. 
-1. You need to specify the save path `result_root` to checkpoints in `utils/get_path_ckpt_dict.py`.
 
-2. You need to get the json file storing paths of ckpt of UniPro for every modality by run:
-```
-python utils/get_path_ckpt_dict.py
-```
-
-
-3. To train the MultiPro for missing modality, you can specify the arguments in the `run_multipro.sh` script stored in [scripts](./scripts/) and run it.
 ```bash
-bash scripts/run_multipro.sh
+bash training_scripts/3-train_disglioma.sh
 ```
 
 

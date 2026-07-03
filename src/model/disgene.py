@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from einops import rearrange, repeat
-from ..PathBINN import PathwayEncoder
+from DisGlioma.src.PathBINN import PathwayEncoder
 from transformers import AutoModel
 from pathlib import Path
 from dataclasses import dataclass
@@ -15,7 +15,7 @@ from typing import Optional
 class DisGeneConfig:
     embed_size: int = 512
     num_pathway: int = 331
-    binn_ckpt: str = Path(__file__).resolve().parent / "PathBINN" / "pretrained.pt"
+    binn_ckpt: str = (Path(__file__).resolve().parents[2] / "save_model" / "path_binn.pt").resolve()
 
     num_cluster: int = 3
     num_prompts: int = 4

@@ -8,15 +8,15 @@ from torch.utils.data import DataLoader
 from DisGlioma.src.utils.dataset_vision import Universal
 from DisGlioma.src.wrapper import VisionWrapper
 from lightning.pytorch.callbacks import ModelCheckpoint,EarlyStopping
+from pathlib import Path
 
 
-def get_parser(yaml_config:str='/home/b24zy/radiomics/4-PromptSurv/training.yaml'):
-
+def get_parser(yaml_config:str=None):
     with open(yaml_config, 'r') as f:
         config = yaml.safe_load(f)
 
     parser = argparse.ArgumentParser(
-        description='Language-guide Medical Image Segmentation')
+        description='Map Vision features to genetic subytpe')
     
     parser.add_argument('--config', default=yaml_config, type=str)
     
@@ -37,11 +37,18 @@ def get_parser(yaml_config:str='/home/b24zy/radiomics/4-PromptSurv/training.yaml
 
 if __name__ == '__main__':
 
+    PROJECT_ROOT = Path(__file__).resolve().parents[2]
+    cfg_path = (PROJECT_ROOT / "src" / "config" / "MapVision.yaml").resolve()
+
     args, cfg = get_parser()
     print("cuda:",torch.cuda.is_available())
 
-    ds_train = Universal(args.root_dir, args.csv_path, mode='train', ds_name=None, fold=args.fold).cache_dataset()
-    ds_valid = Universal(args.root_dir, args.csv_path, mode='valid', ds_name=None, fold=args.fold).cache_dataset()
+    save_path = (PROJECT_ROOT / args.save_path).resolve()
+    root_dir = (PROJECT_ROOT / args.root_dir).resolve()
+    csv_path = (PROJECT_ROOT / args.csv_path).resolve()
+
+    ds_train = Universal(root_dir, csv_path, mode='train', ds_name=None, fold=args.fold).cache_dataset()
+    ds_valid = Universal(root_dir, csv_path, mode='valid', ds_name=None, fold=args.fold).cache_dataset()
     
     dl_train = DataLoader(ds_train, batch_size=args.train_bsz, shuffle=True, num_workers=args.train_bsz)
     dl_valid = DataLoader(ds_valid, batch_size=args.valid_bsz, shuffle=False, num_workers=args.valid_bsz)
@@ -50,10 +57,10 @@ if __name__ == '__main__':
 
     ## 1. setting recall function
     model_ckpt = ModelCheckpoint(
-        dirpath=args.save_path,
-        filename="{}_fold{}".format(cfg.model_name, args.fold),
+        dirpath=save_path,
+        filename="map_vision",
         monitor='val_loss',
-        save_top_k=3,
+        save_top_k=1,
         mode='min',
         verbose=True,
         save_weights_only=True

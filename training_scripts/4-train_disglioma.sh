@@ -1,0 +1,1 @@
+python -u ./src/trainer/train_disglioma.py

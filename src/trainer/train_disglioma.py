@@ -2,30 +2,27 @@ import torch
 import lightning as pl
 import utils.config as load_config
 import argparse
+import yaml
 
 from torch.utils.data import DataLoader
-from ..utils.dataset_binn import RNASeqDataset
-from ..wrapper import DisGeneWrapper
-from torch.utils.data import DataLoader
+from DisGlioma.src.utils.dataset_vision import Universal
+from DisGlioma.src.wrapper import DisGliomaWrapper
 from lightning.pytorch.callbacks import ModelCheckpoint,EarlyStopping
 from pathlib import Path
 
-import yaml
 
 def get_parser(yaml_config:str=None):
-
     with open(yaml_config, 'r') as f:
         config = yaml.safe_load(f)
 
     parser = argparse.ArgumentParser(
-        description='Genetic embeddings distillation')
+        description='Training DisGlioma')
     
     parser.add_argument('--config', default=yaml_config, type=str)
     
     parser.add_argument('--train_bsz', default=config['TRAIN']['train_batch_size'], type=int)
     parser.add_argument('--valid_bsz', default=config['TRAIN']['valid_batch_size'], type=int)
     parser.add_argument('--root_dir', default=config['DATA']['root_dir'], type=str)
-    parser.add_argument('--ds_name', default=config['DATA']['ds_name'], type=str)
     parser.add_argument('--csv_path', default=config['DATA']['csv_path'], type=str)
     parser.add_argument('--fold', default=config['DATA']['fold'], type=int)
     parser.add_argument('--save_path', default=config['MODEL']['model_save_path'], type=str)
@@ -34,13 +31,14 @@ def get_parser(yaml_config:str=None):
     assert args.config is not None
 
     cfg = load_config.load_cfg_from_cfg_file(args.config)
+
     return args, cfg
 
 
 if __name__ == '__main__':
 
     PROJECT_ROOT = Path(__file__).resolve().parents[2]
-    cfg_path = (PROJECT_ROOT / "src" / "config" / "DisGene.yaml").resolve()
+    cfg_path = (PROJECT_ROOT / "src" / "config" / "DisGlioma.yaml").resolve()
 
     args, cfg = get_parser()
     print("cuda:",torch.cuda.is_available())
@@ -49,18 +47,18 @@ if __name__ == '__main__':
     root_dir = (PROJECT_ROOT / args.root_dir).resolve()
     csv_path = (PROJECT_ROOT / args.csv_path).resolve()
 
-    ds_train = RNASeqDataset(root_dir, csv_path, args.ds_name,mode='all', fold=args.fold)
-    ds_valid = RNASeqDataset(root_dir, csv_path, args.ds_name,mode='test', fold=args.fold)
+    ds_train = Universal(root_dir, csv_path, mode='train', ds_name=None, fold=args.fold).cache_dataset()
+    ds_valid = Universal(root_dir, csv_path, mode='valid', ds_name=None, fold=args.fold).cache_dataset()
     
-    dl_train = DataLoader(ds_train, batch_size=args.train_bsz, shuffle=True, num_workers=16)
-    dl_valid = DataLoader(ds_valid, batch_size=args.valid_bsz, shuffle=False, num_workers=8)
+    dl_train = DataLoader(ds_train, batch_size=args.train_bsz, shuffle=True, num_workers=args.train_bsz)
+    dl_valid = DataLoader(ds_valid, batch_size=args.valid_bsz, shuffle=False, num_workers=args.valid_bsz)
 
-    model = DisGeneWrapper(cfg)
+    model = DisGliomaWrapper(cfg)
 
     ## 1. setting recall function
     model_ckpt = ModelCheckpoint(
         dirpath=save_path,
-        filename="disgene",
+        filename="disglioma",
         monitor='val_loss',
         save_top_k=1,
         mode='min',

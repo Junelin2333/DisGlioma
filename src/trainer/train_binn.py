@@ -60,7 +60,7 @@ if __name__ == '__main__':
     ## 1. setting recall function
     model_ckpt = ModelCheckpoint(
         dirpath=args.save_path,
-        filename="{}_fold{}".format(args.ds_name, args.fold),
+        filename="path_binn",
         monitor='val_loss',
         mode='min',
         verbose=True,

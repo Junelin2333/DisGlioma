@@ -14,22 +14,6 @@ class scGPTEmbedding(nn.Module):
             "enc_norm":
                 nn.LayerNorm(config.embed_size)
         })
-        # Value encoder remains the same
-        if config.input_emb_style == "continuous":
-            self.value_encoder = nn.ModuleDict({
-                "linear1": nn.Linear(1, config.embed_size),
-                "linear2": nn.Linear(config.embed_size, config.embed_size),
-                "activation": nn.ReLU(),
-                "norm": nn.LayerNorm(config.embed_size),
-                "dropout": nn.Dropout(config.dropout)
-            })
-        elif config.input_emb_style == "scaling":
-            self.value_encoder = nn.Identity()
-            raise Exception(
-                "scaling input embedding style not supported because this model was trained on continuous style"
-            )
-        else:
-            raise Exception("unsupported embedding style")
 
     def forward(
         self,

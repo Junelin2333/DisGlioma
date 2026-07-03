@@ -7,7 +7,7 @@ TRAIN:
   min_lr: 0.00005
 
   min_epochs: 10
-  max_epochs: 72
+  max_epochs: 144
   patience: 10
 
   device: 1
