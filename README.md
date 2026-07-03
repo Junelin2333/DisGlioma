@@ -108,7 +108,7 @@ bash training_scripts/3-map_vision.sh
 Finally, both the visual encoder and the cross-attention module were frozen, and the enhanced visual features together with the encoded clinical information were fed into the risk decoder to enable non-invasive prediction based on preoperative multimodal information. In this final step, only the risk decoder was trained. 
 
 ```bash
-bash training_scripts/3-train_disglioma.sh
+bash training_scripts/4-train_disglioma.sh
 ```
 
 ## License & Citation
